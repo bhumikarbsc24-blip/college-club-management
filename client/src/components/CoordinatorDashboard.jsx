@@ -46,17 +46,13 @@ export default function CoordinatorDashboard() {
         setError("");
 
         try {
-            const [
-                clubRes,
-                eventRes,
-                announcementRes,
-                membershipRes
-            ] = await Promise.all([
-                API.get("/clubs"),
-                API.get("/events"),
-                API.get("/announcements"),
-                API.get("/memberships")
-            ]);
+            const [clubRes, eventRes, announcementRes, membershipRes] =
+                await Promise.all([
+                    API.get("/clubs"),
+                    API.get("/events"),
+                    API.get("/announcements"),
+                    API.get("/memberships")
+                ]);
 
             setClubs(getList(clubRes.data, "clubs"));
             setEvents(getList(eventRes.data, "events"));
@@ -72,22 +68,19 @@ export default function CoordinatorDashboard() {
         }
     };
 
+    // Initial dashboard data loading
     useEffect(() => {
         let cancelled = false;
 
         const fetchData = async () => {
             try {
-                const [
-                    clubRes,
-                    eventRes,
-                    announcementRes,
-                    membershipRes
-                ] = await Promise.all([
-                    API.get("/clubs"),
-                    API.get("/events"),
-                    API.get("/announcements"),
-                    API.get("/memberships")
-                ]);
+                const [clubRes, eventRes, announcementRes, membershipRes] =
+                    await Promise.all([
+                        API.get("/clubs"),
+                        API.get("/events"),
+                        API.get("/announcements"),
+                        API.get("/memberships")
+                    ]);
 
                 if (!cancelled) {
                     setClubs(getList(clubRes.data, "clubs"));
@@ -139,12 +132,14 @@ export default function CoordinatorDashboard() {
         try {
             const response = await API.post("/clubs", clubForm);
             showMessage(response.data.message || "Club added successfully!");
+
             setClubForm({
                 name: "",
                 description: "",
                 category: "",
                 facultyCoordinator: ""
             });
+
             await loadData();
         } catch (err) {
             showError(err, "Unable to add club.");
@@ -153,9 +148,7 @@ export default function CoordinatorDashboard() {
 
     // Delete a club
     const deleteClub = async (id) => {
-        if (!window.confirm("Are you sure you want to delete this club?")) {
-            return;
-        }
+        if (!window.confirm("Are you sure you want to delete this club?")) return;
 
         try {
             await API.delete(`/clubs/${id}`);
@@ -173,6 +166,7 @@ export default function CoordinatorDashboard() {
         try {
             await API.post("/events", eventForm);
             showMessage("Event added successfully!");
+
             setEventForm({
                 title: "",
                 description: "",
@@ -180,6 +174,7 @@ export default function CoordinatorDashboard() {
                 venue: "",
                 category: ""
             });
+
             await loadData();
         } catch (err) {
             showError(err, "Unable to add event.");
@@ -188,9 +183,7 @@ export default function CoordinatorDashboard() {
 
     // Delete an event
     const deleteEvent = async (id) => {
-        if (!window.confirm("Are you sure you want to delete this event?")) {
-            return;
-        }
+        if (!window.confirm("Are you sure you want to delete this event?")) return;
 
         try {
             await API.delete(`/events/${id}`);
@@ -208,11 +201,13 @@ export default function CoordinatorDashboard() {
         try {
             await API.post("/announcements", announcementForm);
             showMessage("Announcement published successfully!");
+
             setAnnouncementForm({
                 title: "",
                 message: "",
                 category: ""
             });
+
             await loadData();
         } catch (err) {
             showError(err, "Unable to publish announcement.");
@@ -221,9 +216,7 @@ export default function CoordinatorDashboard() {
 
     // Delete an announcement
     const deleteAnnouncement = async (id) => {
-        if (!window.confirm("Are you sure you want to delete this announcement?")) {
-            return;
-        }
+        if (!window.confirm("Are you sure you want to delete this announcement?")) return;
 
         try {
             await API.delete(`/announcements/${id}`);
@@ -234,7 +227,7 @@ export default function CoordinatorDashboard() {
         }
     };
 
-    // Approve or reject a membership
+    // Approve or reject membership
     const updateMembership = async (id, status) => {
         try {
             await API.put(`/memberships/${id}`, { status });
@@ -246,113 +239,206 @@ export default function CoordinatorDashboard() {
     };
 
     const tabs = [
-        "dashboard",
-        "clubs",
-        "events",
-        "announcements",
-        "memberships"
+        { id: "dashboard", label: "Overview", icon: "📊" },
+        { id: "clubs", label: "Manage Clubs", icon: "🎓" },
+        { id: "events", label: "Manage Events", icon: "📅" },
+        { id: "announcements", label: "Announcements", icon: "📢" },
+        { id: "memberships", label: "Membership Requests", icon: "👥" }
     ];
 
+    const pendingCount = memberships.filter(
+        (item) => item.status === "Pending"
+    ).length;
+
     return (
-        <div className="dashboard">
-            <header className="dashboard-header">
-                <div>
-                    <h2>College Club Portal</h2>
-                    <p>Club Coordinator Panel</p>
+        <div className="dashboard coordinator-dashboard">
+
+            <header className="coordinator-header">
+                <div className="coordinator-brand">
+                    <div className="coordinator-logo">CC</div>
+                    <div>
+                        <h2>CampusConnect</h2>
+                        <p>Coordinator Portal</p>
+                    </div>
                 </div>
 
                 <button onClick={logout} className="logout-button">
-                    Logout
+                    Logout ↗
                 </button>
             </header>
 
-            <main className="dashboard-content">
-                <section className="welcome-section">
-                    <h1>Welcome, {user.name || "Coordinator"}!</h1>
-                    <p>Manage college clubs and campus activities.</p>
+            <main className="coordinator-content">
+
+                <section className="coordinator-welcome">
+                    <div>
+                        <span className="coordinator-eyebrow">
+                            COORDINATOR WORKSPACE
+                        </span>
+                        <h1>Welcome back, {user.name || "Coordinator"}!</h1>
+                        <p>
+                            Manage your college clubs, organize events and
+                            stay connected with students.
+                        </p>
+                    </div>
+
+                    <div className="coordinator-welcome-icon">🎓</div>
                 </section>
 
-                <nav className="dashboard-tabs">
+                <nav className="coordinator-tabs">
                     {tabs.map((tab) => (
                         <button
-                            key={tab}
-                            className={activeTab === tab ? "active-tab" : ""}
+                            key={tab.id}
+                            className={
+                                activeTab === tab.id
+                                    ? "coordinator-tab active"
+                                    : "coordinator-tab"
+                            }
                             onClick={() => {
-                                setActiveTab(tab);
+                                setActiveTab(tab.id);
                                 setMessage("");
                                 setError("");
                             }}
                         >
-                            {tab === "memberships"
-                                ? "Membership Requests"
-                                : tab.charAt(0).toUpperCase() + tab.slice(1)}
+                            <span>{tab.icon}</span>
+                            {tab.label}
                         </button>
                     ))}
                 </nav>
 
                 {message && (
-                    <p className="success-message">{message}</p>
+                    <div className="coordinator-alert success-message">
+                        ✓ {message}
+                    </div>
                 )}
 
                 {error && (
-                    <p className="error-message">{error}</p>
+                    <div className="coordinator-alert error-message">
+                        {error}
+                    </div>
                 )}
 
                 {loading ? (
                     <p className="loading-message">Loading dashboard...</p>
                 ) : (
-                    <section className="dashboard-section">
+                    <section className="coordinator-section">
 
-                        {/* Dashboard overview */}
+                        {/* DASHBOARD OVERVIEW */}
                         {activeTab === "dashboard" && (
                             <>
-                                <h2>Dashboard Overview</h2>
+                                <div className="coordinator-section-heading">
+                                    <div>
+                                        <h2>Dashboard Overview</h2>
+                                        <p>Here's what's happening on your campus.</p>
+                                    </div>
+                                </div>
 
-                                <div className="dashboard-grid">
-                                    <article className="dashboard-card">
-                                        <h3>Total Clubs</h3>
+                                <div className="coordinator-stats-grid">
+                                    <article className="coordinator-stat-card">
+                                        <div className="coordinator-stat-icon blue">🎓</div>
+                                        <p>Total Clubs</p>
                                         <h2>{clubs.length}</h2>
+                                        <span>Registered college clubs</span>
                                     </article>
 
-                                    <article className="dashboard-card">
-                                        <h3>Total Events</h3>
+                                    <article className="coordinator-stat-card">
+                                        <div className="coordinator-stat-icon purple">📅</div>
+                                        <p>Total Events</p>
                                         <h2>{events.length}</h2>
+                                        <span>Campus activities</span>
                                     </article>
 
-                                    <article className="dashboard-card">
-                                        <h3>Announcements</h3>
+                                    <article className="coordinator-stat-card">
+                                        <div className="coordinator-stat-icon orange">📢</div>
+                                        <p>Announcements</p>
                                         <h2>{announcements.length}</h2>
+                                        <span>Published updates</span>
                                     </article>
 
-                                    <article className="dashboard-card">
-                                        <h3>Pending Requests</h3>
-                                        <h2>
-                                            {memberships.filter(
-                                                (item) => item.status === "Pending"
-                                            ).length}
-                                        </h2>
+                                    <article className="coordinator-stat-card">
+                                        <div className="coordinator-stat-icon green">👥</div>
+                                        <p>Pending Requests</p>
+                                        <h2>{pendingCount}</h2>
+                                        <span>Awaiting your approval</span>
                                     </article>
+                                </div>
+
+                                <div className="coordinator-quick-section">
+                                    <h2>Quick Actions</h2>
+                                    <p>Manage your campus activities easily.</p>
+
+                                    <div className="coordinator-quick-grid">
+                                        <button onClick={() => setActiveTab("clubs")}>
+                                            <span>🎓</span>
+                                            <strong>Add or Manage Clubs</strong>
+                                            <small>Manage college clubs</small>
+                                        </button>
+
+                                        <button onClick={() => setActiveTab("events")}>
+                                            <span>📅</span>
+                                            <strong>Create an Event</strong>
+                                            <small>Organize campus events</small>
+                                        </button>
+
+                                        <button onClick={() => setActiveTab("announcements")}>
+                                            <span>📢</span>
+                                            <strong>Publish Announcement</strong>
+                                            <small>Share important updates</small>
+                                        </button>
+
+                                        <button onClick={() => setActiveTab("memberships")}>
+                                            <span>👥</span>
+                                            <strong>Review Requests</strong>
+                                            <small>Approve student memberships</small>
+                                        </button>
+                                    </div>
                                 </div>
                             </>
                         )}
 
-                        {/* Manage clubs */}
+                        {/* MANAGE CLUBS */}
                         {activeTab === "clubs" && (
                             <>
-                                <h2>Manage Clubs</h2>
+                                <div className="coordinator-section-heading">
+                                    <div>
+                                        <h2>Manage Clubs</h2>
+                                        <p>Create and manage college clubs.</p>
+                                    </div>
+                                </div>
 
-                                <form className="dashboard-form" onSubmit={addClub}>
-                                    <h3>Add New Club</h3>
+                                <form className="coordinator-form" onSubmit={addClub}>
+                                    <h3>＋ Add New Club</h3>
 
-                                    <input
-                                        placeholder="Club Name"
-                                        value={clubForm.name}
-                                        onChange={(e) => setClubForm({
-                                            ...clubForm,
-                                            name: e.target.value
-                                        })}
-                                        required
-                                    />
+                                    <div className="coordinator-form-grid">
+                                        <input
+                                            placeholder="Club Name"
+                                            value={clubForm.name}
+                                            onChange={(e) => setClubForm({
+                                                ...clubForm,
+                                                name: e.target.value
+                                            })}
+                                            required
+                                        />
+
+                                        <input
+                                            placeholder="Category"
+                                            value={clubForm.category}
+                                            onChange={(e) => setClubForm({
+                                                ...clubForm,
+                                                category: e.target.value
+                                            })}
+                                            required
+                                        />
+
+                                        <input
+                                            placeholder="Faculty Coordinator"
+                                            value={clubForm.facultyCoordinator}
+                                            onChange={(e) => setClubForm({
+                                                ...clubForm,
+                                                facultyCoordinator: e.target.value
+                                            })}
+                                            required
+                                        />
+                                    </div>
 
                                     <textarea
                                         placeholder="Club Description"
@@ -364,43 +450,30 @@ export default function CoordinatorDashboard() {
                                         required
                                     />
 
-                                    <input
-                                        placeholder="Category"
-                                        value={clubForm.category}
-                                        onChange={(e) => setClubForm({
-                                            ...clubForm,
-                                            category: e.target.value
-                                        })}
-                                        required
-                                    />
-
-                                    <input
-                                        placeholder="Faculty Coordinator"
-                                        value={clubForm.facultyCoordinator}
-                                        onChange={(e) => setClubForm({
-                                            ...clubForm,
-                                            facultyCoordinator: e.target.value
-                                        })}
-                                        required
-                                    />
-
-                                    <button type="submit">Add Club</button>
+                                    <button type="submit" className="coordinator-submit">
+                                        Add Club
+                                    </button>
                                 </form>
 
-                                <h3>Existing Clubs</h3>
+                                <div className="coordinator-list-heading">
+                                    <h3>Existing Clubs</h3>
+                                    <span>{clubs.length} Clubs</span>
+                                </div>
 
-                                <div className="dashboard-grid">
+                                <div className="coordinator-card-grid">
                                     {clubs.length === 0 ? (
                                         <p>No clubs available.</p>
                                     ) : clubs.map((club) => (
-                                        <article className="dashboard-card" key={club._id}>
+                                        <article className="coordinator-item-card" key={club._id}>
+                                            <div className="coordinator-item-icon">🎓</div>
+                                            <span className="coordinator-category">{club.category}</span>
                                             <h3>{club.name}</h3>
                                             <p>{club.description}</p>
-                                            <p><strong>Category:</strong> {club.category}</p>
-                                            <p><strong>Coordinator:</strong> {club.facultyCoordinator}</p>
-
+                                            <div className="coordinator-item-detail">
+                                                Faculty: {club.facultyCoordinator}
+                                            </div>
                                             <button
-                                                className="delete-button"
+                                                className="coordinator-delete"
                                                 onClick={() => deleteClub(club._id)}
                                             >
                                                 Delete Club
@@ -411,23 +484,60 @@ export default function CoordinatorDashboard() {
                             </>
                         )}
 
-                        {/* Manage events */}
+                        {/* MANAGE EVENTS */}
                         {activeTab === "events" && (
                             <>
-                                <h2>Manage Events</h2>
+                                <div className="coordinator-section-heading">
+                                    <div>
+                                        <h2>Manage Events</h2>
+                                        <p>Plan and organize exciting campus events.</p>
+                                    </div>
+                                </div>
 
-                                <form className="dashboard-form" onSubmit={addEvent}>
-                                    <h3>Create New Event</h3>
+                                <form className="coordinator-form" onSubmit={addEvent}>
+                                    <h3>＋ Create New Event</h3>
 
-                                    <input
-                                        placeholder="Event Title"
-                                        value={eventForm.title}
-                                        onChange={(e) => setEventForm({
-                                            ...eventForm,
-                                            title: e.target.value
-                                        })}
-                                        required
-                                    />
+                                    <div className="coordinator-form-grid">
+                                        <input
+                                            placeholder="Event Title"
+                                            value={eventForm.title}
+                                            onChange={(e) => setEventForm({
+                                                ...eventForm,
+                                                title: e.target.value
+                                            })}
+                                            required
+                                        />
+
+                                        <input
+                                            placeholder="Category"
+                                            value={eventForm.category}
+                                            onChange={(e) => setEventForm({
+                                                ...eventForm,
+                                                category: e.target.value
+                                            })}
+                                            required
+                                        />
+
+                                        <input
+                                            type="datetime-local"
+                                            value={eventForm.date}
+                                            onChange={(e) => setEventForm({
+                                                ...eventForm,
+                                                date: e.target.value
+                                            })}
+                                            required
+                                        />
+
+                                        <input
+                                            placeholder="Venue"
+                                            value={eventForm.venue}
+                                            onChange={(e) => setEventForm({
+                                                ...eventForm,
+                                                venue: e.target.value
+                                            })}
+                                            required
+                                        />
+                                    </div>
 
                                     <textarea
                                         placeholder="Event Description"
@@ -439,81 +549,86 @@ export default function CoordinatorDashboard() {
                                         required
                                     />
 
-                                    <label>Event Date</label>
-                                    <input
-                                        type="datetime-local"
-                                        value={eventForm.date}
-                                        onChange={(e) => setEventForm({
-                                            ...eventForm,
-                                            date: e.target.value
-                                        })}
-                                        required
-                                    />
-
-                                    <input
-                                        placeholder="Venue"
-                                        value={eventForm.venue}
-                                        onChange={(e) => setEventForm({
-                                            ...eventForm,
-                                            venue: e.target.value
-                                        })}
-                                        required
-                                    />
-
-                                    <input
-                                        placeholder="Category"
-                                        value={eventForm.category}
-                                        onChange={(e) => setEventForm({
-                                            ...eventForm,
-                                            category: e.target.value
-                                        })}
-                                        required
-                                    />
-
-                                    <button type="submit">Add Event</button>
+                                    <button type="submit" className="coordinator-submit">
+                                        Add Event
+                                    </button>
                                 </form>
 
-                                <h3>Existing Events</h3>
+                                <div className="coordinator-list-heading">
+                                    <h3>Existing Events</h3>
+                                    <span>{events.length} Events</span>
+                                </div>
 
-                                {events.map((event) => (
-                                    <article className="dashboard-card" key={event._id}>
-                                        <h3>{event.title}</h3>
-                                        <p>{event.description}</p>
-                                        <p><strong>Date:</strong> {new Date(event.date).toLocaleString()}</p>
-                                        <p><strong>Venue:</strong> {event.venue}</p>
-                                        <p><strong>Status:</strong> {event.status}</p>
+                                <div className="coordinator-card-grid">
+                                    {events.length === 0 ? (
+                                        <p>No events available.</p>
+                                    ) : events.map((event) => (
+                                        <article className="coordinator-item-card" key={event._id}>
+                                            <div className="coordinator-item-icon">📅</div>
+                                            <span className="coordinator-category">{event.category}</span>
+                                            <h3>{event.title}</h3>
+                                            <p>{event.description}</p>
 
-                                        <button
-                                            className="delete-button"
-                                            onClick={() => deleteEvent(event._id)}
-                                        >
-                                            Delete Event
-                                        </button>
-                                    </article>
-                                ))}
+                                            <div className="coordinator-item-detail">
+                                                Date: {event.date
+                                                    ? new Date(event.date).toLocaleString()
+                                                    : "N/A"}
+                                            </div>
+
+                                            <div className="coordinator-item-detail">
+                                                Venue: {event.venue}
+                                            </div>
+
+                                            <div className="coordinator-item-detail">
+                                                Status: {event.status || "N/A"}
+                                            </div>
+
+                                            <button
+                                                className="coordinator-delete"
+                                                onClick={() => deleteEvent(event._id)}
+                                            >
+                                                Delete Event
+                                            </button>
+                                        </article>
+                                    ))}
+                                </div>
                             </>
                         )}
 
-                        {/* Manage announcements */}
+                        {/* MANAGE ANNOUNCEMENTS */}
                         {activeTab === "announcements" && (
                             <>
-                                <h2>Manage Announcements</h2>
+                                <div className="coordinator-section-heading">
+                                    <div>
+                                        <h2>Manage Announcements</h2>
+                                        <p>Share important information with students.</p>
+                                    </div>
+                                </div>
 
-                                <form
-                                    className="dashboard-form"
-                                    onSubmit={addAnnouncement}
-                                >
-                                    <h3>Publish Announcement</h3>
+                                <form className="coordinator-form" onSubmit={addAnnouncement}>
+                                    <h3>＋ Publish Announcement</h3>
 
-                                    <input
-                                        placeholder="Announcement Title"
-                                        value={announcementForm.title}
-                                        onChange={(e) => setAnnouncementForm({
-                                            ...announcementForm,
-                                            title: e.target.value
-                                        })}
-                                        required
-                                    />
+                                    <div className="coordinator-form-grid">
+                                        <input
+                                            placeholder="Announcement Title"
+                                            value={announcementForm.title}
+                                            onChange={(e) => setAnnouncementForm({
+                                                ...announcementForm,
+                                                title: e.target.value
+                                            })}
+                                            required
+                                        />
+
+                                        <input
+                                            placeholder="Category"
+                                            value={announcementForm.category}
+                                            onChange={(e) => setAnnouncementForm({
+                                                ...announcementForm,
+                                                category: e.target.value
+                                            })}
+                                            required
+                                        />
+                                    </div>
 
                                     <textarea
                                         placeholder="Announcement Message"
@@ -525,95 +640,114 @@ export default function CoordinatorDashboard() {
                                         required
                                     />
 
-                                    <input
-                                        placeholder="Category"
-                                        value={announcementForm.category}
-                                        onChange={(e) => setAnnouncementForm({
-                                            ...announcementForm,
-                                            category: e.target.value
-                                        })}
-                                        required
-                                    />
-
-                                    <button type="submit">
+                                    <button type="submit" className="coordinator-submit">
                                         Publish Announcement
                                     </button>
                                 </form>
 
-                                <h3>Published Announcements</h3>
+                                <div className="coordinator-list-heading">
+                                    <h3>Published Announcements</h3>
+                                    <span>{announcements.length} Announcements</span>
+                                </div>
 
-                                {announcements.map((item) => (
-                                    <article className="dashboard-card" key={item._id}>
-                                        <h3>{item.title}</h3>
-                                        <p>{item.message}</p>
-                                        <p><strong>Category:</strong> {item.category}</p>
+                                <div className="coordinator-card-grid">
+                                    {announcements.length === 0 ? (
+                                        <p>No announcements available.</p>
+                                    ) : announcements.map((item) => (
+                                        <article className="coordinator-item-card" key={item._id}>
+                                            <div className="coordinator-item-icon">📢</div>
+                                            <span className="coordinator-category">{item.category}</span>
+                                            <h3>{item.title}</h3>
+                                            <p>{item.message}</p>
 
-                                        <button
-                                            className="delete-button"
-                                            onClick={() => deleteAnnouncement(item._id)}
-                                        >
-                                            Delete Announcement
-                                        </button>
-                                    </article>
-                                ))}
+                                            <button
+                                                className="coordinator-delete"
+                                                onClick={() => deleteAnnouncement(item._id)}
+                                            >
+                                                Delete Announcement
+                                            </button>
+                                        </article>
+                                    ))}
+                                </div>
                             </>
                         )}
 
-                        {/* Membership requests */}
+                        {/* MEMBERSHIP REQUESTS */}
                         {activeTab === "memberships" && (
                             <>
-                                <h2>Student Membership Requests</h2>
+                                <div className="coordinator-section-heading">
+                                    <div>
+                                        <h2>Membership Requests</h2>
+                                        <p>Review and manage student club applications.</p>
+                                    </div>
 
-                                {memberships.length === 0 ? (
-                                    <p>No membership requests yet.</p>
-                                ) : memberships.map((item) => (
-                                    <article className="dashboard-card" key={item._id}>
-                                        <h3>{item.student?.name || "Student"}</h3>
+                                    <span className="coordinator-pending-count">
+                                        {pendingCount} Pending
+                                    </span>
+                                </div>
 
-                                        <p>
-                                            <strong>Email:</strong>{" "}
-                                            {item.student?.email || "N/A"}
-                                        </p>
+                                <div className="coordinator-card-grid">
+                                    {memberships.length === 0 ? (
+                                        <p>No membership requests yet.</p>
+                                    ) : memberships.map((item) => (
+                                        <article className="coordinator-item-card membership-card" key={item._id}>
+                                            <div className="coordinator-item-icon">👤</div>
 
-                                        <p>
-                                            <strong>USN:</strong>{" "}
-                                            {item.student?.usn || "N/A"}
-                                        </p>
+                                            <span className={
+                                                item.status === "Approved"
+                                                    ? "membership-status approved"
+                                                    : item.status === "Rejected"
+                                                        ? "membership-status rejected"
+                                                        : "membership-status pending"
+                                            }>
+                                                {item.status}
+                                            </span>
 
-                                        <p>
-                                            <strong>Club:</strong>{" "}
-                                            {item.club?.name || "N/A"}
-                                        </p>
+                                            <h3>{item.student?.name || "Student"}</h3>
 
-                                        <p>
-                                            <strong>Status:</strong>{" "}
-                                            {item.status}
-                                        </p>
-
-                                        {item.status === "Pending" && (
-                                            <div className="action-buttons">
-                                                <button
-                                                    onClick={() => updateMembership(item._id, "Approved")}
-                                                >
-                                                    Approve
-                                                </button>
-
-                                                <button
-                                                    className="delete-button"
-                                                    onClick={() => updateMembership(item._id, "Rejected")}
-                                                >
-                                                    Reject
-                                                </button>
+                                            <div className="coordinator-item-detail">
+                                                Email: {item.student?.email || "N/A"}
                                             </div>
-                                        )}
-                                    </article>
-                                ))}
+
+                                            <div className="coordinator-item-detail">
+                                                USN: {item.student?.usn || "N/A"}
+                                            </div>
+
+                                            <div className="coordinator-item-detail">
+                                                Club: {item.club?.name || "N/A"}
+                                            </div>
+
+                                            {item.status === "Pending" && (
+                                                <div className="coordinator-membership-actions">
+                                                    <button
+                                                        className="coordinator-approve"
+                                                        onClick={() => updateMembership(item._id, "Approved")}
+                                                    >
+                                                        ✓ Approve
+                                                    </button>
+
+                                                    <button
+                                                        className="coordinator-reject"
+                                                        onClick={() => updateMembership(item._id, "Rejected")}
+                                                    >
+                                                        Reject
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </article>
+                                    ))}
+                                </div>
                             </>
                         )}
 
                     </section>
                 )}
             </main>
+
+            <footer className="coordinator-footer">
+                <p>© 2026 CampusConnect | College Club Management Portal</p>
+            </footer>
+
         </div>
     );
 }
